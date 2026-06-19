@@ -1,0 +1,45 @@
+JSHS-WIKI Supabase 연결 방법
+============================
+
+1) Supabase 프로젝트 만들기
+   - https://supabase.com 에서 새 프로젝트 생성
+
+2) 데이터베이스 스키마 적용
+   - Supabase 대시보드 → SQL Editor
+   - supabase/schema.sql 내용 전체 붙여넣기 → Run
+
+3) Auth 설정 (회원가입 후 바로 편집 테스트용)
+   - Authentication → Providers → Email
+   - "Confirm email" 을 끄면 가입 직후 바로 로그인·편집 가능
+   - 켜 두면 이메일 인증 후 로그인해야 편집 가능
+
+4) API 키를 config.js에 넣기
+   - Project Settings → API
+   - Project URL → supabaseUrl
+   - anon public key → supabaseAnonKey
+
+   PowerShell 예시:
+   $env:SUPABASE_URL="https://xxxx.supabase.co"
+   $env:SUPABASE_ANON_KEY="eyJ..."
+   node scripts/generate-config.mjs
+
+   또는 config.js를 직접 수정
+
+5) 편집 권한 확인
+   - 누구나 회원가입·로그인하여 문서 열람 가능
+   - @jeju-s.jje.hs.kr 학교 이메일: 편집·저장 가능 (가입 시 이름·기수 필수)
+   - 그 외 이메일: 열람 전용 (가입·로그인 가능, 편집·저장 불가)
+
+6) RLS 요약
+   - 읽기: 누구나 가능
+   - 쓰기: 로그인 + @jeju-s.jje.hs.kr 이메일만 가능
+
+   이미 schema.sql을 실행한 적이 있다면 SQL Editor에서 아래만 다시 실행:
+   create or replace function public.is_jshs_editor() ... (schema.sql 상단 함수)
+
+7) 제주과학고 소개 문서 시드
+   - SQL Editor에서 supabase/seed-school-intro.sql 실행
+   - 제곽·동아리·학교 행사·R&E·주의 사항 등 사이드바 문서 생성
+   - (제주과학고등학교 문서는 schema.sql 실행 후 별도 편집하거나 mock 내용 참고)
+
+주의: service_role 키는 브라우저(config.js)에 넣지 마세요.

@@ -1,0 +1,5 @@
+.cursor/
+config.js
+node_modules/
+.netlify/
+dist/

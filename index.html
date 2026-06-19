@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSHS-WIKI</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="brand">
+            <i data-lucide="atom" class="brand-icon" aria-hidden="true"></i>
+            <h1>JSHS-WIKI</h1>
+          </div>
+          <p class="brand-subtitle">제곽위키</p>
+        </div>
+
+        <div class="sidebar-search">
+          <label for="searchInput" class="visually-hidden">문서 검색</label>
+          <div class="search-field">
+            <div class="search-input-wrap">
+              <i data-lucide="search" aria-hidden="true"></i>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="문서 검색..."
+                autocomplete="off"
+                role="combobox"
+                aria-expanded="false"
+                aria-controls="searchSuggestions"
+                aria-autocomplete="list"
+              />
+            </div>
+            <ul
+              id="searchSuggestions"
+              class="search-suggestions hidden"
+              role="listbox"
+              aria-label="검색 결과"
+            ></ul>
+          </div>
+        </div>
+
+        <nav class="sidebar-section" aria-labelledby="schoolIntroTitle">
+          <h2 id="schoolIntroTitle">제주과학고 소개</h2>
+          <ul class="link-list sidebar-intro-list">
+            <li><a href="#/wiki/%EC%A0%9C%EC%A3%BC%EA%B3%BC%ED%95%99%EA%B3%A0%EB%93%B1%ED%95%99%EA%B5%90%20-%20%EB%82%98%EB%AC%B4%EC%9C%84%ED%82%A4" class="sidebar-intro-link" data-wiki-title="제주과학고등학교 - 나무위키">제주과학고등학교 - 나무위키</a></li>
+            <li><a href="#/wiki/%EC%A7%81%EC%A0%91%20%EC%A0%81%EC%96%B4%EB%B3%B4%EB%8A%94%20%EC%A0%9C%EA%B3%BD" class="sidebar-intro-link" data-wiki-title="직접 적어보는 제곽">직접 적어보는 제곽</a></li>
+            <li><a href="#/wiki/R%26E%20연구" class="sidebar-intro-link" data-wiki-title="R&E 연구">R&amp;E 연구</a></li>
+            <li><a href="#/wiki/동아리" class="sidebar-intro-link" data-wiki-title="동아리">동아리</a></li>
+            <li><a href="#/wiki/학교%20행사" class="sidebar-intro-link" data-wiki-title="학교 행사">학교 행사</a></li>
+            <li><a href="#/wiki/%EC%A3%BC%EC%9D%98%20%EC%82%AC%ED%95%AD" class="sidebar-intro-link" data-wiki-title="주의 사항">주의 사항</a></li>
+          </ul>
+        </nav>
+
+        <nav class="sidebar-section" aria-labelledby="generationTitle">
+          <h2 id="generationTitle">기수</h2>
+          <ul id="generationList" class="link-list"></ul>
+        </nav>
+
+        <nav class="sidebar-section" aria-labelledby="categoryTitle">
+          <h2 id="categoryTitle">카테고리</h2>
+          <ul class="link-list">
+            <li><a href="#/category/notices">공지</a></li>
+            <li><a href="#/category/studies">학습</a></li>
+            <li><a href="#/category/clubs">동아리</a></li>
+            <li><a href="#/category/events">행사</a></li>
+            <li><a href="#/category/archives">아카이브</a></li>
+          </ul>
+        </nav>
+
+        <div class="sidebar-auth" id="sidebarAuth">
+          <div class="sidebar-auth-guest guest-only">
+            <button type="button" class="sidebar-auth-btn" data-action="open-auth-modal" data-auth-mode="login">로그인</button>
+            <button type="button" class="sidebar-auth-btn sidebar-auth-btn--primary" data-action="open-auth-modal" data-auth-mode="signup">회원가입</button>
+          </div>
+          <div class="sidebar-auth-user auth-only">
+            <p id="authUserLabel" class="sidebar-auth-label">로그인됨</p>
+            <button type="button" class="sidebar-auth-btn" data-action="logout-submit">로그아웃</button>
+          </div>
+        </div>
+      </aside>
+
+      <main id="mainContent" class="main-content">
+        <header class="content-header">
+          <h2 id="pageTitle">환영합니다</h2>
+          <p id="pageDescription">사이드바에서 항목을 선택해 문서를 탐색해보세요.</p>
+        </header>
+
+        <section id="viewContainer" class="content-body">
+          <article class="wiki-card">
+            <h3>JSHS-WIKI 시작</h3>
+            <p>이 영역은 라우팅에 따라 문서 목록, 문서 상세, 편집 화면으로 교체됩니다.</p>
+            <p>현재는 기본 골격만 구성되어 있습니다.</p>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <div id="loginModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+      <div class="modal-backdrop" data-action="close-login-modal"></div>
+      <div class="modal-card">
+        <div class="auth-modal-tabs" role="tablist" aria-label="인증 방식">
+          <button type="button" class="auth-modal-tab auth-modal-tab--active" data-action="switch-auth-mode" data-auth-mode="login" role="tab" aria-selected="true">로그인</button>
+          <button type="button" class="auth-modal-tab" data-action="switch-auth-mode" data-auth-mode="signup" role="tab" aria-selected="false">회원가입</button>
+        </div>
+        <h3 id="loginModalTitle">로그인</h3>
+        <p class="modal-desc">
+          누구나 가입·로그인하여 문서를 <strong>열람</strong>할 수 있습니다.
+          <strong>편집·저장</strong>은 학교 이메일(<span id="loginDomainHint">@jeju-s.jje.hs.kr</span>) 계정만 가능합니다.
+          <span id="signupExtraHint" class="hidden">가입 시 <strong>이름</strong>과 <strong>기수</strong>를 반드시 입력해 주세요.</span>
+        </p>
+        <label class="editor-label" for="loginEmail">이메일</label>
+        <input id="loginEmail" class="editor-input" type="email" placeholder="email@example.com" />
+        <div id="signupProfileFields" class="hidden">
+          <label class="editor-label" for="signupNickname">이름 <span class="label-required">(필수)</span></label>
+          <input id="signupNickname" class="editor-input" type="text" maxlength="20" placeholder="예: 홍길동" autocomplete="name" required />
+          <label class="editor-label" for="signupGen">기수 <span class="label-required">(필수)</span></label>
+          <input id="signupGen" class="editor-input" type="number" min="1" max="99" placeholder="예: 28" required />
+        </div>
+        <label class="editor-label" for="loginPassword">비밀번호</label>
+        <input id="loginPassword" class="editor-input" type="password" placeholder="8자 이상" />
+        <label id="signupPasswordConfirmLabel" class="editor-label hidden" for="signupPasswordConfirm">비밀번호 확인</label>
+        <input id="signupPasswordConfirm" class="editor-input hidden" type="password" placeholder="비밀번호 다시 입력" />
+        <p id="loginError" class="login-error hidden" role="alert"></p>
+        <p id="loginSuccess" class="login-success hidden" role="status"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" data-action="close-login-modal">닫기</button>
+          <button type="button" class="btn-primary" id="authSubmitBtn" data-action="login-submit">로그인</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="./config.js"></script>
+    <script src="./gen-calendar.js"></script>
+    <script src="./mock-data.js"></script>
+    <script src="./auth.js"></script>
+    <script src="./api.js"></script>
+    <script src="./app.js" defer></script>
+  </body>
+</html>
