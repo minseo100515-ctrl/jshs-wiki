@@ -818,6 +818,26 @@
     };
   }
 
+  async function deleteArchivePost(archiveId) {
+    const id = Number(archiveId);
+    if (!Number.isInteger(id) || id < 1) {
+      throw new Error("삭제할 댓글을 찾을 수 없습니다.");
+    }
+
+    if (isMockMode()) {
+      const store = getMockStore();
+      if (!store) throw new Error("Mock store is not available.");
+      const index = store.archives.findIndex((row) => row.id === id);
+      if (index === -1) throw new Error("삭제할 댓글을 찾을 수 없습니다.");
+      store.archives.splice(index, 1);
+      return;
+    }
+
+    const client = getClient();
+    const { error } = await client.from("Archives").delete().eq("id", id);
+    if (error) throw error;
+  }
+
   async function getArticlesByCategory(category) {
     const slug = (category || "general").trim();
 
@@ -858,6 +878,7 @@
     getGenerationArchiveData,
     saveArticle,
     saveArchivePost,
+    deleteArchivePost,
     getRevisionsByArticleId,
     getArticleRevisionHistory,
     createRevision,

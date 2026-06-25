@@ -1053,8 +1053,27 @@ body.is-school-editor .school-editor-only {
 .discussion-comment-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.55rem;
   margin-bottom: 0.45rem;
+}
+
+.discussion-comment-author-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.discussion-delete-btn {
+  flex-shrink: 0;
+  color: #b42318;
+  border-color: #f2c6c2;
+}
+
+.discussion-delete-btn:hover {
+  background: #fff5f5;
+  border-color: #e08a82;
 }
 
 .discussion-avatar {

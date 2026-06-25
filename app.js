@@ -195,6 +195,18 @@ function promptForEditAuth() {
   return false;
 }
 
+function promptForAdminAuth() {
+  if (!isLoggedIn()) {
+    openLoginModal();
+    return false;
+  }
+  if (!isWikiAdmin()) {
+    alert("관리자만 댓글을 삭제할 수 있습니다.");
+    return false;
+  }
+  return true;
+}
+
 function updateGenSaveButtons() {
   const canSave = canSaveContent();
   document
@@ -1797,21 +1809,29 @@ function buildGenInfoboxHTML(genNumber, generation) {
 }
 
 function buildGenDiscussionHTML(genNumber, comments, titleSet) {
+  const showAdminDelete = isWikiAdmin();
   const listItems = comments.length
     ? comments
-        .map(
-          (item) => `
-        <li class="discussion-comment">
+        .map((item) => {
+          const deleteBtn =
+            showAdminDelete && item.id
+              ? `<button type="button" class="wiki-mini-btn discussion-delete-btn" data-action="delete-gen-comment" data-gen="${escapeHtml(genNumber)}" data-archive-id="${escapeHtml(String(item.id))}" title="댓글 삭제">[삭제]</button>`
+              : "";
+          return `
+        <li class="discussion-comment" data-archive-id="${escapeHtml(String(item.id || ""))}">
           <div class="discussion-comment-head">
-            <span class="discussion-avatar" aria-hidden="true">${escapeHtml((item.title || "?")[0])}</span>
-            <div class="discussion-comment-meta">
-              <strong class="discussion-author">${escapeHtml(item.title || "익명")}</strong>
+            <div class="discussion-comment-author-wrap">
+              <span class="discussion-avatar" aria-hidden="true">${escapeHtml((item.title || "?")[0])}</span>
+              <div class="discussion-comment-meta">
+                <strong class="discussion-author">${escapeHtml(item.title || "익명")}</strong>
+              </div>
             </div>
+            ${deleteBtn}
           </div>
           <div class="discussion-comment-body wiki-markdown">${renderMarkdown(item.content || "", titleSet)}</div>
         </li>
-      `
-        )
+      `;
+        })
         .join("")
     : `<li class="discussion-empty"><p>아직 댓글이 없습니다. 첫 댓글을 남겨보세요.</p></li>`;
 
@@ -2549,6 +2569,24 @@ async function handleSaveGenComment(genNumber) {
   }
 }
 
+async function handleDeleteGenComment(genNumber, archiveId) {
+  if (!promptForAdminAuth()) return;
+  if (!archiveId) return;
+  if (!window.confirm("이 댓글을 삭제할까요?")) return;
+
+  try {
+    await window.WikiAPI.deleteArchivePost(archiveId);
+    await renderGenerationArchive(genNumber);
+    document.getElementById("gen-discussion")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  } catch (error) {
+    console.error("Failed to delete comment:", error);
+    alert("댓글 삭제에 실패했습니다. 관리자 권한과 DB 설정을 확인해주세요.");
+  }
+}
+
 async function handleSaveArchive(genNumber) {
   if (!promptForEditAuth()) return;
 
@@ -2841,6 +2879,14 @@ function initViewActions() {
       const gen = target.dataset.gen;
       if (!gen) return;
       await handleSaveGenComment(gen);
+      return;
+    }
+
+    if (action === "delete-gen-comment") {
+      const gen = target.dataset.gen;
+      const archiveId = target.dataset.archiveId;
+      if (!gen || !archiveId) return;
+      await handleDeleteGenComment(gen, archiveId);
     }
   });
 }
