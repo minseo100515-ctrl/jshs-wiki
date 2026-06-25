@@ -474,6 +474,120 @@ const WIKI_TABLE_TEMPLATE = `| 열1 | 열2 | 열3 |
 | 내용 | 내용 | 내용 |
 `;
 
+function isMarkdownTableLine(line) {
+  const trimmed = (line || "").trim();
+  return trimmed.startsWith("|") && trimmed.length > 1;
+}
+
+function isMarkdownTableSeparatorLine(line) {
+  return /^\s*\|(?:\s*:?-{3,}:?\s*\|)+\s*$/.test(line || "");
+}
+
+function getCursorLineIndex(text, cursorPos) {
+  let line = 0;
+  const limit = Math.min(cursorPos, text.length);
+  for (let i = 0; i < limit; i += 1) {
+    if (text[i] === "\n") line += 1;
+  }
+  return line;
+}
+
+function findMarkdownTableBlockAtCursor(text, cursorPos) {
+  const lines = text.split("\n");
+  const cursorLine = getCursorLineIndex(text, cursorPos);
+  if (!isMarkdownTableLine(lines[cursorLine])) return null;
+
+  let startLine = cursorLine;
+  let endLine = cursorLine;
+  while (startLine > 0 && isMarkdownTableLine(lines[startLine - 1])) {
+    startLine -= 1;
+  }
+  while (endLine < lines.length - 1 && isMarkdownTableLine(lines[endLine + 1])) {
+    endLine += 1;
+  }
+
+  const blockLines = lines.slice(startLine, endLine + 1);
+  if (blockLines.length < 2 || !blockLines.some(isMarkdownTableSeparatorLine)) {
+    return null;
+  }
+
+  let startIndex = 0;
+  for (let i = 0; i < startLine; i += 1) {
+    startIndex += lines[i].length + 1;
+  }
+  const endIndex = startIndex + blockLines.join("\n").length;
+
+  return {
+    startLine,
+    endLine,
+    cursorLine,
+    lines: blockLines,
+    startIndex,
+    endIndex,
+  };
+}
+
+function countMarkdownTableColumns(line) {
+  const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return trimmed.split("|").length;
+}
+
+function replaceEditorTextRange(editor, start, end, replacement) {
+  const scrollTop = editor.scrollTop;
+  editor.setRangeText(replacement, start, end, "end");
+  editor.scrollTop = scrollTop;
+  editor.focus();
+}
+
+function addWikiTableRow(editorTarget = "articleEditor") {
+  const editor = getWikiTextarea(editorTarget);
+  if (!editor) return;
+
+  const block = findMarkdownTableBlockAtCursor(editor.value, editor.selectionStart);
+  if (!block) {
+    alert("표 안에 커서를 놓은 뒤 행+ 버튼을 눌러주세요.");
+    return;
+  }
+
+  const colCount = countMarkdownTableColumns(block.lines[0]);
+  const newRow = `| ${Array(colCount).fill("내용").join(" | ")} |`;
+  const rowIndexInBlock = block.cursorLine - block.startLine;
+  const updatedLines = [...block.lines];
+  updatedLines.splice(rowIndexInBlock + 1, 0, newRow);
+
+  replaceEditorTextRange(
+    editor,
+    block.startIndex,
+    block.endIndex,
+    updatedLines.join("\n")
+  );
+}
+
+function addWikiTableColumn(editorTarget = "articleEditor") {
+  const editor = getWikiTextarea(editorTarget);
+  if (!editor) return;
+
+  const block = findMarkdownTableBlockAtCursor(editor.value, editor.selectionStart);
+  if (!block) {
+    alert("표 안에 커서를 놓은 뒤 열+ 버튼을 눌러주세요.");
+    return;
+  }
+
+  const updatedLines = block.lines.map((line) => {
+    if (isMarkdownTableSeparatorLine(line)) {
+      return `${line.trimEnd()} ------ |`;
+    }
+    return `${line.trimEnd()} 내용 |`;
+  });
+
+  replaceEditorTextRange(
+    editor,
+    block.startIndex,
+    block.endIndex,
+    updatedLines.join("\n")
+  );
+}
+
 function getWikiTextarea(editorTarget = "articleEditor") {
   return document.getElementById(editorTarget);
 }
@@ -495,6 +609,11 @@ function insertTextIntoWikiEditor(editor, text, selectStart = null, selectEnd = 
 function insertWikiTable(editorTarget = "articleEditor") {
   const editor = getWikiTextarea(editorTarget);
   if (!editor) return;
+
+  if (findMarkdownTableBlockAtCursor(editor.value, editor.selectionStart)) {
+    alert("표 안에서는 행+ / 열+ 버튼으로 편집하세요.\n새 표는 표 밖에 커서를 두고 표 버튼을 눌러주세요.");
+    return;
+  }
 
   const prefix = editor.value.slice(0, editor.selectionStart).endsWith("\n") ? "" : "\n";
   const template = `${prefix}${WIKI_TABLE_TEMPLATE}\n`;
@@ -531,7 +650,9 @@ function buildWikiSyntaxToolbarHTML(editorTarget = "") {
     { key: "linkAlias", label: "[[링크|표시]]" },
     { key: "footnote", label: "[*각주]" },
     { key: "list", label: "목록" },
-    { key: "table", label: "표", action: "wiki-insert-table" },
+    { key: "table", label: "표", action: "wiki-insert-table", title: "새 표 삽입" },
+    { key: "tableRow", label: "행+", action: "wiki-table-add-row", title: "표에 행 추가" },
+    { key: "tableCol", label: "열+", action: "wiki-table-add-col", title: "표에 열 추가" },
     { key: "image", label: "그림", action: "wiki-insert-image" },
     { key: "hr", label: "----" },
     { key: "quote", label: "인용" },
@@ -546,7 +667,8 @@ function buildWikiSyntaxToolbarHTML(editorTarget = "") {
     .map((tool) => {
       const action = tool.action || "wiki-insert-syntax";
       const snippetAttr = tool.key ? ` data-snippet="${tool.key}"` : "";
-      return `<button type="button" class="wiki-syntax-btn" data-action="${action}"${snippetAttr}${targetAttr} title="문법 삽입">${escapeHtml(tool.label)}</button>`;
+      const titleAttr = tool.title ? ` title="${escapeHtml(tool.title)}"` : ' title="문법 삽입"';
+      return `<button type="button" class="wiki-syntax-btn" data-action="${action}"${snippetAttr}${targetAttr}${titleAttr}>${escapeHtml(tool.label)}</button>`;
     })
     .join("");
 }
@@ -563,7 +685,7 @@ function buildWikiSyntaxHelpHTML() {
         <li><code>'''굵게'''</code>, <code>''기울임''</code> (또는 <code>**</code>, <code>*</code>)</li>
         <li><code>[* 각주 내용]</code> 각주 — 본문에 [1] 표시, 하단에 목록</li>
         <li><code>- 목록</code>, <code>&gt; 인용</code>, <code>----</code> 구분선</li>
-        <li><code>| 열1 | 열2 |</code> 표 — 툴바 <strong>표</strong> 버튼으로 삽입</li>
+        <li><code>| 열1 | 열2 |</code> 표 — <strong>표</strong>로 새 표 삽입, <strong>행+ / 열+</strong>로 기존 표 편집</li>
         <li><code>![설명](https://주소)</code> 그림 — 툴바 <strong>그림</strong> 버튼으로 URL 입력</li>
         <li>섹션이 2개 이상이면 자동 <strong>목차</strong> 생성</li>
       </ul>
@@ -2805,6 +2927,16 @@ function initViewActions() {
 
     if (action === "wiki-insert-table") {
       insertWikiTable(target.dataset.editorTarget);
+      return;
+    }
+
+    if (action === "wiki-table-add-row") {
+      addWikiTableRow(target.dataset.editorTarget);
+      return;
+    }
+
+    if (action === "wiki-table-add-col") {
+      addWikiTableColumn(target.dataset.editorTarget);
       return;
     }
 
