@@ -1882,48 +1882,6 @@ function highlightSidebarIntroLink(title) {
   });
 }
 
-function buildGenInfoboxHTML(genNumber, generation) {
-  const slogan = generation?.slogan
-    ? escapeHtml(generation.slogan)
-    : '<span class="infobox-muted">등록된 슬로건 없음</span>';
-  const repImage = generation?.rep_image
-    ? `<figure class="infobox-image"><img src="${escapeHtml(generation.rep_image)}" alt="제${escapeHtml(genNumber)}기 대표 이미지" /></figure>`
-    : `<div class="infobox-image infobox-image--placeholder" aria-hidden="true">대표 사진 없음</div>`;
-  const entranceYear = getGenEntranceYear(genNumber);
-  const gradeLabel = getGenGradeLabel(genNumber);
-  const gradeRow = gradeLabel
-    ? `<tr><th scope="row">학년</th><td>${escapeHtml(gradeLabel)}</td></tr>`
-    : "";
-
-  return `
-    <aside class="wiki-infobox" aria-label="기수 정보 인포박스">
-      <div class="infobox-title">제${escapeHtml(genNumber)}기</div>
-      ${repImage}
-      <table class="infobox-table">
-        <tbody>
-          <tr>
-            <th scope="row">기수</th>
-            <td>${escapeHtml(genNumber)}기</td>
-          </tr>
-          <tr>
-            <th scope="row">입학</th>
-            <td>${entranceYear}학년도</td>
-          </tr>
-          ${gradeRow}
-          <tr>
-            <th scope="row">슬로건</th>
-            <td>${slogan}</td>
-          </tr>
-          <tr>
-            <th scope="row">문서 분류</th>
-            <td><a href="#/category/archives" class="infobox-link">아카이브</a></td>
-          </tr>
-        </tbody>
-      </table>
-    </aside>
-  `;
-}
-
 function buildGenDiscussionHTML(genNumber, comments, titleSet) {
   const showAdminDelete = isWikiAdmin();
   const listItems = comments.length
@@ -2027,12 +1985,9 @@ function buildGenerationDocHTML(
         </div>
       </header>
       <div id="wikiArticleBody" class="wiki-article-body gen-wiki-intro-body">${introBodyHtml}</div>
-      <div class="gen-wiki-layout">
-        <div class="gen-wiki-main">
-          ${sectionsHTML}
-          ${buildGenDiscussionHTML(genNumber, comments, titleSet)}
-        </div>
-        ${buildGenInfoboxHTML(genNumber, generation)}
+      <div class="gen-wiki-main">
+        ${sectionsHTML}
+        ${buildGenDiscussionHTML(genNumber, comments, titleSet)}
       </div>
       ${buildWikiEditorPanelHTML(resolvedGenTitle)}
       <div id="wikiHistoryPanel" class="wiki-history-panel hidden"></div>
