@@ -55,10 +55,6 @@ function getCurrentGen() {
   return window.WikiGenCalendar.getCurrentGen();
 }
 
-function getCurrentEntranceYear() {
-  return window.WikiGenCalendar.getCurrentEntranceYear();
-}
-
 function getMaxGen() {
   return window.WikiGenCalendar.getMaxGen();
 }
@@ -77,11 +73,9 @@ function getGenGroupStart(genNumber) {
 
 function buildHomeContent() {
   const gen = getCurrentGen();
-  const entranceYear = getCurrentEntranceYear();
   const kstLabel = window.WikiGenCalendar.formatKstLabel();
 
   return `<p>좌측 <strong>제주과학고 소개</strong>에서 학교 문서를 보거나, 기수·카테고리 메뉴로 아카이브를 탐색하세요.</p>
-      <p><strong>현재 재학:</strong> ${gen}기 = ${entranceYear}학년도 입학 · 1학년</p>
       <p class="wiki-gen-calendar-note">기수·학년도는 한국시간 기준 매년 3월 1일에 자동 갱신됩니다. (오늘: ${kstLabel})</p>
       <p><strong>추천 문서:</strong>
         <a href="#/wiki/${encodeURIComponent(SCHOOL_NAMU_WIKI_TITLE)}">${escapeHtml(SCHOOL_NAMU_WIKI_TITLE)}</a> ·
