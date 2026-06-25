@@ -7,11 +7,16 @@ const rootDir = path.resolve(__dirname, "..");
 
 const supabaseUrl = process.env.SUPABASE_URL || "YOUR_SUPABASE_URL";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "YOUR_SUPABASE_ANON_KEY";
+const superAdminEmails = [
+  "wiki-admin1@jeju-s.jje.hs.kr",
+  "wiki-admin2@jeju-s.jje.hs.kr",
+];
 
 const configSource = `window.APP_CONFIG = {
   supabaseUrl: ${JSON.stringify(supabaseUrl)},
   supabaseAnonKey: ${JSON.stringify(supabaseAnonKey)},
   allowedEmailDomain: "@jeju-s.jje.hs.kr",
+  superAdminEmails: ${JSON.stringify(superAdminEmails)},
 };
 `;
 

@@ -2,6 +2,10 @@ const APP_CONFIG = window.APP_CONFIG ?? {
   supabaseUrl: "YOUR_SUPABASE_URL",
   supabaseAnonKey: "YOUR_SUPABASE_ANON_KEY",
   allowedEmailDomain: "@jeju-s.jje.hs.kr",
+  superAdminEmails: [
+    "wiki-admin1@jeju-s.jje.hs.kr",
+    "wiki-admin2@jeju-s.jje.hs.kr",
+  ],
 };
 
 const STUB_CATEGORY = "토막글";
@@ -129,6 +133,7 @@ let currentArticleState = null;
 let currentEditTitle = null;
 let currentCategorySlug = null;
 let currentArchiveEdit = null;
+let isArticleSaveInProgress = false;
 let draftAutosaveTimer = null;
 let articleTitleCache = null;
 let articleTitleCachePromise = null;
@@ -159,9 +164,14 @@ function canEdit() {
   return window.WikiAuth?.canEditWiki?.() ?? false;
 }
 
+function isWikiAdmin() {
+  return window.WikiAuth?.isWikiAdmin?.() ?? false;
+}
+
 function applyAuthToDocument() {
   document.body.classList.toggle("is-authenticated", isLoggedIn());
   document.body.classList.toggle("is-school-editor", canEdit());
+  document.body.classList.toggle("is-wiki-admin", isWikiAdmin());
   updateAuthBarUI();
   updateInlineSaveButton();
   updateGenSaveButtons();
@@ -221,7 +231,8 @@ function updateAuthBarUI() {
 
   if (canEdit()) {
     const genText = profile.gen ? `${profile.gen}기 ` : "";
-    label.textContent = `${genText}${displayName} (${email})`;
+    const adminText = isWikiAdmin() ? " · 관리자" : "";
+    label.textContent = `${genText}${displayName} (${email})${adminText}`;
     return;
   }
 
@@ -1111,10 +1122,7 @@ function createGenerationLinks() {
       link.className = "gen-sub-link";
       link.dataset.gen = String(gen);
       const entranceYear = getGenEntranceYear(gen);
-      link.textContent =
-        gen === getCurrentGen()
-          ? `${gen}기 (${entranceYear} · 현재 1학년)`
-          : `${gen}기 (${entranceYear})`;
+      link.textContent = `${gen}기 (${entranceYear})`;
       if (gen === getCurrentGen()) link.classList.add("gen-sub-link--current");
       itemLi.appendChild(link);
       subList.appendChild(itemLi);
@@ -1418,6 +1426,13 @@ function initArticleSearch() {
 
 function buildWikiLinkHref(title) {
   return `#/wiki/${encodeURIComponent(title.trim())}`;
+}
+
+function syncWikiHashForTitle(title) {
+  const nextHash = buildWikiLinkHref(title);
+  if (window.location.hash === nextHash) return;
+  const nextUrl = `${window.location.pathname}${window.location.search}${nextHash}`;
+  history.replaceState(null, "", nextUrl);
 }
 
 function preprocessWikiLinksToPlaceholders(markdown, titleSet) {
@@ -2418,6 +2433,7 @@ async function handleSaveArticle(title) {
   const editSummary = (editSummaryInput?.value || "").trim() || "내용 수정";
   const editorProfile = getEditorProfile();
 
+  isArticleSaveInProgress = true;
   try {
     const previousArticle = currentArticleState?.id
       ? {
@@ -2475,10 +2491,7 @@ async function handleSaveArticle(title) {
     await refreshWikiArticleBody();
     updateStubFooter();
 
-    const readHash = buildWikiLinkHref(saved.title);
-    if (window.location.hash !== readHash) {
-      history.replaceState(null, "", readHash);
-    }
+    syncWikiHashForTitle(saved.title);
   } catch (error) {
     if (error?.name === "ContentValidationError") {
       alert(error.message);
@@ -2486,6 +2499,8 @@ async function handleSaveArticle(title) {
     }
     console.error("Failed to save article:", error);
     alert("문서 저장에 실패했습니다. 잠시 후 다시 시도해주세요.");
+  } finally {
+    isArticleSaveInProgress = false;
   }
 }
 
@@ -2592,7 +2607,14 @@ function isProtectedEditHash(hash) {
 }
 
 async function refreshViewForAuthChange() {
-  const hash = window.location.hash || "#/";
+  applyAuthToDocument();
+  updateSaveButtonState();
+  updateInlineSaveButton();
+
+  if (currentEditTitle || isArticleSaveInProgress) {
+    return;
+  }
+
   await parseHashRoute();
 }
 
@@ -2607,7 +2629,7 @@ async function parseHashRoute() {
     const editTitle = decodeURIComponent(editMatch[1]);
     await renderWikiDocumentByTitle(editTitle);
     await enterInlineEditMode();
-    history.replaceState(null, "", buildWikiLinkHref(editTitle));
+    syncWikiHashForTitle(editTitle);
     return;
   }
 
@@ -2702,6 +2724,8 @@ function initViewActions() {
 
     const action = target.dataset.action;
     if (!action) return;
+
+    event.preventDefault();
 
     if (action === "start-gen-write") {
       const gen = target.dataset.gen;

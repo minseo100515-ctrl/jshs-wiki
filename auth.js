@@ -2,7 +2,33 @@
   let supabaseClient = null;
   let activeSession = null;
   let allowedEmailDomain = "@jeju-s.jje.hs.kr";
+  let superAdminEmails = new Set();
   const sessionListeners = new Set();
+
+  function normalizeEmail(email) {
+    return (email || "").trim().toLowerCase();
+  }
+
+  function loadSuperAdminEmails(config) {
+    const fromConfig = Array.isArray(config?.superAdminEmails)
+      ? config.superAdminEmails
+      : [];
+    superAdminEmails = new Set(
+      fromConfig.map(normalizeEmail).filter(Boolean)
+    );
+  }
+
+  function isSuperAdminEmail(email) {
+    const normalized = normalizeEmail(email);
+    return normalized ? superAdminEmails.has(normalized) : false;
+  }
+
+  function isWikiAdmin(email = getCurrentUserEmail()) {
+    if (isSuperAdminEmail(email)) return true;
+    const meta = activeSession?.user?.user_metadata || {};
+    const role = String(meta.wiki_role || meta.role || "").toLowerCase();
+    return role === "super_admin" || role === "admin";
+  }
 
   function isSchoolEmail(email) {
     if (!email || typeof email !== "string") return false;
@@ -51,6 +77,7 @@
 
   async function init(config) {
     allowedEmailDomain = config.allowedEmailDomain || allowedEmailDomain;
+    loadSuperAdminEmails(config);
 
     if (!global.supabase) {
       console.warn("Supabase SDK not loaded.");
@@ -122,7 +149,8 @@
   }
 
   function canEditWiki() {
-    return isSchoolEmail(getCurrentUserEmail());
+    const email = getCurrentUserEmail();
+    return isSchoolEmail(email) || isWikiAdmin(email);
   }
 
   async function signInWithEmail(email, password) {
@@ -149,6 +177,7 @@
     }
 
     const isSchool = isSchoolEmail(email);
+    const isAdminAccount = isSuperAdminEmail(email);
     let nickname = (profile.nickname || "").trim();
     let gen = profile.gen != null ? String(profile.gen).trim() : "";
 
@@ -179,6 +208,7 @@
           gen: gen || null,
           gen_number: gen || null,
           generation: gen || null,
+          ...(isAdminAccount ? { wiki_role: "super_admin" } : {}),
         },
         emailRedirectTo: global.location?.origin || undefined,
       },
@@ -217,6 +247,8 @@
     getSupabaseClient,
     hasActiveSession,
     canEditWiki,
+    isWikiAdmin,
+    isSuperAdminEmail,
     getCurrentUserId,
     getCurrentUserEmail,
     getEditorProfile,

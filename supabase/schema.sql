@@ -9,6 +9,11 @@ security definer
 set search_path = public
 as $$
   select coalesce(
+    lower(coalesce(auth.jwt() -> 'user_metadata' ->> 'wiki_role', '')) in ('super_admin', 'admin'),
+    lower(coalesce(auth.jwt() ->> 'email', '')) in (
+      'wiki-admin1@jeju-s.jje.hs.kr',
+      'wiki-admin2@jeju-s.jje.hs.kr'
+    ),
     (auth.jwt() ->> 'email') ilike '%@jeju-s.jje.hs.kr',
     false
   );

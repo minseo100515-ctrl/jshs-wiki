@@ -42,4 +42,12 @@ JSHS-WIKI Supabase 연결 방법
    - 제곽·동아리·학교 행사·R&E·주의 사항 등 사이드바 문서 생성
    - (제주과학고등학교 문서는 schema.sql 실행 후 별도 편집하거나 mock 내용 참고)
 
+8) 슈퍼 관리자 2계정
+   - Authentication → Users → Add user 로 아래 2개 생성 (Auto Confirm 체크)
+     wiki-admin1@jeju-s.jje.hs.kr
+     wiki-admin2@jeju-s.jje.hs.kr
+   - SQL Editor에서 supabase/setup-super-admins.sql 실행
+   - config.js 의 superAdminEmails 와 동일 이메일 유지
+   - Netlify 배포 시 config.js 또는 환경 변수에 superAdminEmails 반영 필요
+
 주의: service_role 키는 브라우저(config.js)에 넣지 마세요.
